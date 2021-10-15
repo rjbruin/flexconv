@@ -12,7 +12,7 @@ import torch
 # project
 from path_handler import model_path
 from model_constructor import construct_model
-from dataset_constructor import construct_dataloaders, get_imagenet_dali_tfrecords
+from dataset_constructor import construct_dataloaders
 import trainer
 import tester
 import ckconv
@@ -63,10 +63,6 @@ def model_and_datasets(cfg):
 
     # Construct dataloaders
     dataloaders = construct_dataloaders(cfg)
-    if cfg.dataset == "Imagenet":
-        # NOTE(rjbruin): ImageNet integration uses the NVIDIA DALI interface for
-        # fast training, making it incompatible with the general API
-        dataloaders = get_imagenet_dali_tfrecords(cfg)
 
     # # WandB – wandb.watch() automatically fetches all layer dimensions, gradients, model parameters and logs them automatically to your dashboard.
     # # Using log="all" log histograms of parameter values in addition to gradients

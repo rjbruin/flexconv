@@ -11,7 +11,6 @@ from datasets import (
     CIFAR100,
     STL10,
     ImagenetDownsampled,
-    imagenet_tfrecord,
 )
 
 # typing
@@ -152,32 +151,4 @@ def construct_dataloaders(
         "test": test_loader,
     }
 
-    return dataloaders
-
-
-def get_imagenet_dali_tfrecords(config):
-    train_loader = imagenet_tfrecord(
-        config.dataset_root,
-        "train",
-        config.batch_size,
-        config.num_workers,
-        0,
-        1,
-        dali_cpu=config.dali_cpu,
-        augment=config.augment,
-    )
-    val_loader = imagenet_tfrecord(
-        config.dataset_root,
-        "val",
-        config.batch_size,
-        config.num_workers,
-        0,
-        1,
-        dali_cpu=config.dali_cpu,
-        augment="none",
-    )
-
-    dataloaders = {"train": train_loader, "validation": val_loader, "test": val_loader}
-
-    # Passing validation loader as test set
     return dataloaders

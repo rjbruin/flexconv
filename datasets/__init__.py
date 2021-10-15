@@ -12,5 +12,4 @@ from .speech_commands import (
     save_data,
 )
 from .char_trajectories import CharTrajectories
-from .imagenet_tfrecords import imagenet_tfrecord
 from .imagenet_small import ImagenetDownsampled
