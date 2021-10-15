@@ -63,11 +63,7 @@ pip install -r requirements.txt
 
 ### Reproducing experiments
 
-Please see [the Experiments readme](experiments/readme.md) for details on reproducing the paper's experiments.
-
-### Pretrained models
-
-*TODO(rjbruin)*
+Please see [the Experiments readme](experiments/readme.md) for details on reproducing the paper's experiments, including checkpoints for selected models.
 
 ### Cite
 If you found this work useful in your research, please consider citing:
