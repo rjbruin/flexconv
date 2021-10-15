@@ -1,0 +1,136 @@
+# @package _global_
+net:
+  type: ""
+  no_hidden: -1
+  no_blocks: -1
+  dropout: 0.0
+  dropout_in: 0.0
+  norm: ""
+  nonlinearity: "ReLU"
+  block_width_factors: [0.0, ]
+kernel:
+  type: ""
+  dim_linear: 0           # Should be overridden automatically
+  no_hidden: -1
+  no_layers: -1
+  activ_function: ""
+  norm: ""
+  omega_0: 0.0
+  learn_omega_0: False
+  weight_norm: False
+  steerable: False
+  init_spatial_value: 1.0
+  bias_init: None
+  input_scale: 25.6
+  sampling_rate_norm: 1.0
+  regularize: False
+  regularize_params:
+    res: 0
+    res_offset: 0
+    target: "gabor+mask"
+    fn: "l2_relu"
+    method: "together"
+    factor: 0.001
+    gauss_stddevs: 2.0
+    gauss_factor: 0.5
+  srf:
+    scale: 0.
+conv:
+  type: ""
+  use_fft: False
+  bias: True
+  padding: "same"
+  stride: 1
+  horizon: "same"
+  cache: False
+mask:
+  use: True
+  type: ""
+  temperature: 0.0
+  init_value: 0.0
+  dynamic_cropping: True
+  threshold: 0.1
+dataset: ""
+dataset_params:
+  root: ""
+  in_ram: False         # For Cityscapes & downsampled Imagenets
+  from_cache: False     # For downsampled Imagenets
+  permuted: False       # For permuted sMNIST
+  noise_padded: False   # For noise-padded CIFAR10
+  memory_size: -1       # For copy memory problem
+  mfcc: False           # For MFCC pre-processing on SpeechCommands
+  drop_rate: 0.0        # For irregular SpeechCommands and CharTrajetories
+  seq_length: -1
+cross_res:
+  resize: ""
+  interpolation: "bilinear"
+  resize_blur: False
+  resize_blur_sigma: 1.0
+  blur: False
+  source_res: 0
+  target_res: 0
+  finetune_epochs: 100
+train:
+  do: True
+  augment: None
+  report_top5_acc: False
+  epochs: -1
+  batch_size: -1
+  lr: 0.0
+  omega_0_lr_factor: 1.0
+  mask_params_lr_factor: 1.0
+  weight_decay: 0.0
+  mask_l2_norm: 0.0
+  magnitude_reg: 0.0
+  grad_clip: 0.0
+  optimizer: Adam
+  optimizer_params:
+    momentum: -1
+    nesterov: False
+  scheduler: ""
+  scheduler_params:
+    decay_steps: -1
+    decay_factor: -1
+    patience: -1
+    warmup_epochs: -1
+test:
+  before_train: False
+  patched: False        # For segmentation
+wandb:
+  project: flexconv
+  entity: vu_tudelft_team
+  dir: ./wandb
+device: cuda
+debug: False
+pretrained: False
+pretrained_params:
+  filepath: ""
+pretrained_wandb: False
+pretrained_wandb_params:
+  filename: ""
+  run_path: ""
+pretrained_strict: True
+seed: 0
+deterministic: False
+comment: ""
+profile:
+  n_batches: 30
+  directory: ""
+  data_mode: "fake"
+  data_shape: 0
+time: False
+summary: [0, ]
+summary_depth: 5
+
+
+
+
+
+
+
+
+
+
+
+
+

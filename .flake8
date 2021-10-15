@@ -1,0 +1,8 @@
+[flake8]
+ignore = E203, E266, E501, W503, F403, F401, C901, E402
+max-line-length = 120
+max-complexity = 20
+select = B,C,E,F,W,T4,B9
+exclude =
+    srf/*
+    ckernel_fitting/*
