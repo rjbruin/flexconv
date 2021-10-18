@@ -68,7 +68,16 @@ Please see [the Experiments readme](experiments/readme.md) for details on reprod
 ### Cite
 If you found this work useful in your research, please consider citing:
 
-_TODO: Insert Arxiv citation here_
+```
+@misc{romero2021flexconv,
+      title={FlexConv: Continuous Kernel Convolutions with Differentiable Kernel Sizes}, 
+      author={David W. Romero and Robert-Jan Bruintjes and Jakub M. Tomczak and Erik J. Bekkers and Mark Hoogendoorn and Jan C. van Gemert},
+      year={2021},
+      eprint={2110.08059},
+      archivePrefix={arXiv},
+      primaryClass={cs.CV}
+}
+```
 
 ### Acknowledgements
 
