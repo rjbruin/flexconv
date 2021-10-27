@@ -22,18 +22,31 @@ class CKConv(torch.nn.Module):
         conv_config: OmegaConf,
     ):
         """
-        Creates a Continuous Kernel Convolution.
+        Continuous Kernel Convolution.
 
         :param in_channels: Number of channels in the input signal
         :param out_channels: Number of channels produced by the convolution
-        :param hidden_channels: Number of hidden units in the network parameterizing the ConvKernel (KernelNet).
-        :param activation_function: Activation function used in KernelNet.
-        :param norm_type: Normalization type used in KernelNet. (only for non-Sine KernelNets).
-        :param dim_linear: patial dimension of the input, e.g., for audio = 1, images = 2 (only 1 suported).
-        :param bias: If True, adds a learnable bias to the output.
-        :param omega_0: Value of the omega_0 value of the KernelNet. (only for non-Sine KernelNets).
-        :param weight_dropout: Dropout rate applied to the sampled convolutional kernels.
-        :param sampling_rate_norm: Normalization factor for deploying at a different sampling rate than trained.
+        :param kernel_config: OmegaConf with settings for the kernel generator.
+            :param type: Identifier for the type of kernel generator to use.
+            :param dim_linear: Dimensionality of the input signal, e.g. 2 for images.
+            :param no_hidden: Amount of hidden channels to use.
+            :param activ_function: Activation function for type=MLP.
+            :param norm: Normalization function for type=MLP.
+            :param weight_norm: Weight normalization, for type=[MLP, SIREN, nSIREN].
+            :param no_layers: Amount of layers to use in kernel generator.
+            :param omega_0: Initial value for omega_0, for type=SIREN.
+            :param learn_omega_0: Whether to learn omega_0, for type=SIREN.
+            :param steerable: Whether to learn steerable kernels, for type=MAGNet.
+            :param init_spatial_value: Initial mu for gabor filters, for type=[GaborNet, MAGNet].
+            :param bias_init: Bias init strategy, for all types but type=MLP.
+            :param input_scale: Scaling factor for linear functions, for type=[GaborNet, MAGNet].
+            :param sampling_rate_norm: Kernel scaling factor for sampling rate normalization.
+        :param conv_config: OmegaConf with settings for the convolutional operator.
+            :param use_fft: Whether to use FFT implementation of convolution.
+            :param horizon: Maximum kernel size. Recommended to be odd and cover the entire image.
+            :param bias: Whether to use bias in kernel generator. TODO(rjbruin): move to kernel_config.
+            :param padding: Padding strategy for convolution.
+            :param stride: Stride applied in convolution.
         """
 
         super().__init__()
@@ -219,8 +232,40 @@ class FlexConv(CKConv):
         conv_config: OmegaConf,
         mask_config: OmegaConf,
     ):
-        """"""
+        """
+        Flexible Size Continuous Kernel Convolution.
 
+        :param in_channels: Number of channels in the input signal
+        :param out_channels: Number of channels produced by the convolution
+        :param kernel_config: OmegaConf with settings for the kernel generator.
+            :param type: Identifier for the type of kernel generator to use.
+            :param dim_linear: Dimensionality of the input signal, e.g. 2 for images.
+            :param no_hidden: Amount of hidden channels to use.
+            :param activ_function: Activation function for type=MLP.
+            :param norm: Normalization function for type=MLP.
+            :param weight_norm: Weight normalization, for type=[MLP, SIREN, nSIREN].
+            :param no_layers: Amount of layers to use in kernel generator.
+            :param omega_0: Initial value for omega_0, for type=SIREN.
+            :param learn_omega_0: Whether to learn omega_0, for type=SIREN.
+            :param steerable: Whether to learn steerable kernels, for type=MAGNet.
+            :param init_spatial_value: Initial mu for gabor filters, for type=[GaborNet, MAGNet].
+            :param bias_init: Bias init strategy, for all types but type=MLP.
+            :param input_scale: Scaling factor for linear functions, for type=[GaborNet, MAGNet].
+            :param sampling_rate_norm: Kernel scaling factor for sampling rate normalization.
+        :param conv_config: OmegaConf with settings for the convolutional operator.
+            :param use_fft: Whether to use FFT implementation of convolution.
+            :param horizon: Maximum kernel size. Recommended to be odd and cover the entire image.
+            :param bias: Whether to use bias in kernel generator. TODO(rjbruin): move to kernel_config.
+            :param padding: Padding strategy for convolution.
+            :param stride: Stride applied in convolution.
+        :param mask_config: OmegaConf with settings for the FlexConv Gaussian mask.
+            :param use: Whether to apply Gaussian mask.
+            :param type: Type of mask. Recommended to use "gaussian".
+            :param init_value: Initial value for the size of the kernel.
+            :param temperature: Temperature of the sigmoid function, for type=sigmoid.
+            :param dynamic_cropping: Whether to crop away pixels below the threshold.
+            :param threshold: Threshold for cropping pixels. Recommended to be 15.0.
+        """
         # Unpack mask_config values:
         mask_use = mask_config.use
         mask_type = mask_config.type

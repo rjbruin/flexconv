@@ -21,6 +21,25 @@ class MAGNet(MFNBase):
         beta: float = 1.0,
         init_spatial_value: float = 1.0,
     ):
+        """
+        Multiplicative Anisotropic Gabor Network.
+
+        :param dim_linear: Dimensionality of input signal, e.g. 2 for images.
+        :param hidden_channels: Amount of hidden channels to use.
+        :param out_channels: Amount of output channels to use.
+        :param no_layers: Amount of layers to use in kernel generator.
+        :param steerable: Whether to learn steerable kernels.
+        :param bias: Whether to use bias.
+        :param bias_init: Bias init strategy.
+        :param input_scale: Scaling factor for linear functions.
+        :param weight_scale: Scale for uniform weight initialization of linear
+            layers.
+        :param alpha: Base alpha for Gamma distribution to initialize Gabor
+            filter variance. This value is divided by `layer_idx+1`.
+        :param beta: Beta for Gamma distribution to initialize Gabor filter
+            variance.
+        :param init_spatial_value: Initial mu for gabor filters.
+        """
         super().__init__(
             dim_linear=dim_linear,
             hidden_channels=hidden_channels,
