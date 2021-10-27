@@ -22,7 +22,7 @@ class MLP(torch.nn.Module):
         mean_init: float = 0.0,
         variance_init: float = 0.01,
         bias_value_init: float = 0.0,
-        spatial_unif_init: bool = True,
+        spatial_unif_init: bool = False,
     ):
         """
         Creates an 3-layer MLP, which parameterizes a convolutional kernel as:
@@ -80,7 +80,7 @@ class MLP(torch.nn.Module):
                     Linear(
                         hidden_channels,
                         hidden_channels,
-                        bias,
+                        bias=bias,
                     ),
                     Norm(hidden_channels),
                     ActivationFunction(),
