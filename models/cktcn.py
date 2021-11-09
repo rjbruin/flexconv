@@ -75,37 +75,93 @@ class TCNBase(torch.nn.Module):
         dropout = net_config.dropout
         block_width_factors = net_config.block_width_factors
 
-        # Unpack dim_linear
-        dim_linear = kernel_config.dim_linear
-
-        # Unpack conv_type
-        conv_type = conv_config.type
+        # Unpack kernel_config
+        kernel_type = kernel_config.type
+        kernel_dim_linear = kernel_config.dim_linear
+        kernel_no_hidden = kernel_config.no_hidden
+        kernel_no_layers = kernel_config.no_layers
+        kernel_activ_function = kernel_config.activ_function
+        kernel_norm = kernel_config.norm
+        kernel_omega_0 = kernel_config.omega_0
+        kernel_learn_omega_0 = kernel_config.learn_omega_0
+        kernel_weight_norm = kernel_config.weight_norm
+        kernel_steerable = kernel_config.steerable
+        kernel_init_spatial_value = kernel_config.init_spatial_value
+        kernel_bias_init = kernel_config.bias_init
+        kernel_input_scale = kernel_config.input_scale
+        kernel_sampling_rate_norm = kernel_config.sampling_rate_norm
 
         # Define Convolution Type:
         # -------------------------
         # Unpack other conv_config values in case normal convolutions are used.
+        conv_type = conv_config.type
         conv_horizon = conv_config.horizon
         conv_padding = conv_config.padding
         conv_stride = conv_config.stride
         conv_bias = conv_config.bias
 
+        # Unpack mask_config
+        mask_use = mask_config.use
+        mask_type = mask_config.type
+        mask_init_value = mask_config.init_value
+        mask_temperature = mask_config.temperature
+        mask_dynamic_cropping = mask_config.dynamic_cropping
+        mask_threshold = mask_config.threshold
+
         # Define partials for types of convs
         if conv_type == "CKConv":
             ConvType = partial(
                 ckconv.nn.CKConv,
-                kernel_config=kernel_config,
-                conv_config=conv_config,
+                kernel_type=kernel_type,
+                kernel_dim_linear=kernel_dim_linear,
+                kernel_no_hidden=kernel_no_hidden,
+                kernel_no_layers=kernel_no_layers,
+                kernel_activ_function=kernel_activ_function,
+                kernel_norm=kernel_norm,
+                kernel_omega_0=kernel_omega_0,
+                kernel_learn_omega_0=kernel_learn_omega_0,
+                kernel_weight_norm=kernel_weight_norm,
+                kernel_steerable=kernel_steerable,
+                kernel_init_spatial_value=kernel_init_spatial_value,
+                kernel_bias_init=kernel_bias_init,
+                kernel_input_scale=kernel_input_scale,
+                kernel_sampling_rate_norm=kernel_sampling_rate_norm,
+                conv_horizon=conv_horizon,
+                conv_padding=conv_padding,
+                conv_stride=conv_stride,
+                conv_bias=conv_bias,
             )
         elif conv_type == "FlexConv":
             ConvType = partial(
                 ckconv.nn.FlexConv,
-                kernel_config=kernel_config,
-                conv_config=conv_config,
-                mask_config=mask_config,
+                kernel_type=kernel_type,
+                kernel_dim_linear=kernel_dim_linear,
+                kernel_no_hidden=kernel_no_hidden,
+                kernel_no_layers=kernel_no_layers,
+                kernel_activ_function=kernel_activ_function,
+                kernel_norm=kernel_norm,
+                kernel_omega_0=kernel_omega_0,
+                kernel_learn_omega_0=kernel_learn_omega_0,
+                kernel_weight_norm=kernel_weight_norm,
+                kernel_steerable=kernel_steerable,
+                kernel_init_spatial_value=kernel_init_spatial_value,
+                kernel_bias_init=kernel_bias_init,
+                kernel_input_scale=kernel_input_scale,
+                kernel_sampling_rate_norm=kernel_sampling_rate_norm,
+                conv_horizon=conv_horizon,
+                conv_padding=conv_padding,
+                conv_stride=conv_stride,
+                conv_bias=conv_bias,
+                mask_use=mask_use,
+                mask_type=mask_type,
+                mask_init_value=mask_init_value,
+                mask_temperature=mask_temperature,
+                mask_dynamic_cropping=mask_dynamic_cropping,
+                mask_threshold=mask_threshold,
             )
         elif conv_type == "Conv":
             ConvType = partial(
-                getattr(torch.nn, f"Conv{dim_linear}d"),
+                getattr(torch.nn, f"Conv{kernel_dim_linear}d"),
                 kernel_size=int(conv_horizon),
                 padding=conv_padding,
                 stride=conv_stride,
@@ -117,12 +173,12 @@ class TCNBase(torch.nn.Module):
 
         # Define NormType
         NormType = {
-            "BatchNorm": getattr(torch.nn, f"BatchNorm{dim_linear}d"),
+            "BatchNorm": getattr(torch.nn, f"BatchNorm{kernel_dim_linear}d"),
             "LayerNorm": ckconv.nn.LayerNorm,
         }[norm]
 
         # Define LinearType
-        LinearType = getattr(ckconv.nn, f"Linear{dim_linear}d")
+        LinearType = getattr(ckconv.nn, f"Linear{kernel_dim_linear}d")
 
         # Create Blocks
         # -------------------------

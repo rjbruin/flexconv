@@ -5,8 +5,10 @@ import ckconv
 
 
 def regularize_gabornet(
-    model, kernel_size, target, fn, method, factor, gauss_stddevs=1.0, gauss_factor=0.5
+    model, horizon, factor, target="gabor", fn="l2_relu", method="together", gauss_stddevs=1.0
 ):
+    """Regularize a FlexNet.
+    """
     # if method != "summed":
     #     raise NotImplementedError()
 
@@ -35,7 +37,7 @@ def regularize_gabornet(
         else:
             flexconv_freqs = magnet_freqs
 
-        nyquist_freq = torch.ones_like(flexconv_freqs) * nyquist_frequency(kernel_size)
+        nyquist_freq = torch.ones_like(flexconv_freqs) * nyquist_frequency(horizon)
 
     elif method == "together" and target == "gabor":
         if masks:
@@ -44,7 +46,7 @@ def regularize_gabornet(
             flexconv_freqs = magnet_freqs
 
         # Divide Nyquist frequency by amount of filters in each layer
-        nyquist_freq = torch.ones_like(flexconv_freqs) * nyquist_frequency(kernel_size)
+        nyquist_freq = torch.ones_like(flexconv_freqs) * nyquist_frequency(horizon)
         nyquist_freq = nyquist_freq / nyquist_freq.shape[1]
 
     elif method in ["together", "together+mask"] and target == "gabor+mask":
@@ -59,13 +61,8 @@ def regularize_gabornet(
             raise NotImplementedError()
 
         # Divide Nyquist frequency by amount of filters in each layer
-        nyquist_freq = torch.ones_like(flexconv_freqs) * nyquist_frequency(kernel_size)
+        nyquist_freq = torch.ones_like(flexconv_freqs) * nyquist_frequency(horizon)
         nyquist_freq = nyquist_freq / nyquist_freq.shape[1]
-
-    # if method == "distributed":
-    #     # Further divide Nyquist freq between sines and gausses
-    #     nyquist_freq[:, :, 0] = nyquist_freq[:, :, 0] * (1.0 - gauss_factor)
-    #     nyquist_freq[:, :, 1] = nyquist_freq[:, :, 1] * gauss_factor
 
     if fn == "l2_relu":
         # L2 ReLU

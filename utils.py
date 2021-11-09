@@ -12,3 +12,6 @@ def load_config_from_json(filepath):
         dot_list.append(f"{key}={data[key]['value']}")
 
     return OmegaConf.from_dotlist(dot_list)
+
+def omegaconf_to_dict(omegaconf, name):
+    return {name + '_' + k: v for (k, v) in omegaconf.to_dict()}

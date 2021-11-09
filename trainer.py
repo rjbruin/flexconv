@@ -17,7 +17,6 @@ import wandb
 import probspec_routines as ps_routines
 from tester import test
 import ckconv
-import timer
 from torchmetrics import Accuracy
 import antialiasing
 from optim import construct_optimizer, construct_scheduler, CLASSES_DATASET
