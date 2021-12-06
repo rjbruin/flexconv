@@ -103,11 +103,10 @@ c10-fn5-reg
 "train.scheduler_params.decay_factor=5",
 "train.scheduler_params.patience=20",
 "train.scheduler=plateau",
-"summary=False",
 "conv.use_fft=True",
 "train.weight_decay=0.0001",
 "seed=0",
-"testcase.save=True",
+"testcase.load=True",
 "testcase.path=./testcases/smnist-tcn-ckconv.npy",
 
 "debug=True",
