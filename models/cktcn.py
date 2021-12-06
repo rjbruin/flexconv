@@ -16,6 +16,7 @@ class TCNBlock(ResidualBlockBase):
         in_channels: int,
         out_channels: int,
         ConvType: Union[CKConv, FlexConv, Conv1d, Conv2d],
+        NonlinearType: torch.nn.Module,
         NormType: torch.nn.Module,
         LinearType: torch.nn.Module,
         dropout: float,
@@ -44,6 +45,7 @@ class TCNBlock(ResidualBlockBase):
             in_channels=in_channels,
             out_channels=out_channels,
             ConvType=ConvType,
+            NonlinearType=NonlinearType,
             NormType=NormType,
             LinearType=LinearType,
             dropout=dropout,
@@ -51,8 +53,8 @@ class TCNBlock(ResidualBlockBase):
 
     def forward(self, x):
         shortcut = self.shortcut(x)
-        out = self.dp(torch.relu(self.norm1(self.cconv1(x))))
-        out = torch.relu(self.dp(torch.relu(self.norm2(self.cconv2(out)))) + shortcut)
+        out = self.dp(self.nonlinear(self.norm1(self.cconv1(x))))
+        out = self.nonlinear(self.dp(self.nonlinear(self.norm2(self.cconv2(out)))) + shortcut)
         return out
 
 
@@ -74,6 +76,7 @@ class TCNBase(torch.nn.Module):
         norm = net_config.norm
         dropout = net_config.dropout
         block_width_factors = net_config.block_width_factors
+        nonlinearity = net_config.nonlinearity
 
         # Unpack kernel_config
         kernel_type = kernel_config.type
@@ -177,6 +180,10 @@ class TCNBase(torch.nn.Module):
             "LayerNorm": ckconv.nn.LayerNorm,
         }[norm]
 
+        NonlinearType = {"ReLU": torch.nn.ReLU, "LeakyReLU": torch.nn.LeakyReLU}[
+            nonlinearity
+        ]
+
         # Define LinearType
         LinearType = getattr(ckconv.nn, f"Linear{kernel_dim_linear}d")
 
@@ -215,6 +222,7 @@ class TCNBase(torch.nn.Module):
                     in_channels=input_ch,
                     out_channels=hidden_ch,
                     ConvType=ConvType,
+                    NonlinearType=NonlinearType,
                     NormType=NormType,
                     LinearType=LinearType,
                     dropout=dropout,

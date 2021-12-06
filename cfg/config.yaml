@@ -121,16 +121,9 @@ profile:
 time: False
 summary: [0, ]
 summary_depth: 5
-
-
-
-
-
-
-
-
-
-
-
-
-
+testcase:
+  load: False
+  save: False
+  epochs: 1
+  batches: 20
+  path: ""

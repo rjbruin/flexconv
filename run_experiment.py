@@ -102,7 +102,7 @@ def model_and_datasets(cfg):
             if isinstance(m, ckconv.nn.CKConv):
                 m.train_length[0] = 0
 
-    if len(cfg.summary) > 1:
+    if cfg.summary:
         torchinfo.summary(model, tuple(cfg.summary), depth=cfg.summary_depth)
 
     return model, dataloaders
