@@ -102,6 +102,7 @@ class TCNBase(torch.nn.Module):
         conv_padding = conv_config.padding
         conv_stride = conv_config.stride
         conv_bias = conv_config.bias
+        conv_use_fft = conv_config.use_fft
 
         # Unpack mask_config
         mask_use = mask_config.use
@@ -130,6 +131,7 @@ class TCNBase(torch.nn.Module):
                 kernel_bias_init=kernel_bias_init,
                 kernel_input_scale=kernel_input_scale,
                 kernel_sampling_rate_norm=kernel_sampling_rate_norm,
+                conv_use_fft=conv_use_fft,
                 conv_padding=conv_padding,
                 conv_stride=conv_stride,
                 conv_bias=conv_bias,
@@ -152,6 +154,7 @@ class TCNBase(torch.nn.Module):
                 kernel_bias_init=kernel_bias_init,
                 kernel_input_scale=kernel_input_scale,
                 kernel_sampling_rate_norm=kernel_sampling_rate_norm,
+                conv_use_fft=conv_use_fft,
                 conv_padding=conv_padding,
                 conv_stride=conv_stride,
                 conv_bias=conv_bias,
