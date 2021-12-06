@@ -113,13 +113,6 @@ def train(
         epoch_start=epoch_start,
     )
 
-    # save model both locally and on wandb
-    if cfg.debug:
-        torch.save(
-            model.state_dict(),
-            os.path.join(hydra.utils.get_original_cwd(), "saved/model.pt"),
-        )
-
     save_to_wandb(model, optimizer, lr_scheduler, cfg, name="final_model")
 
     return model, optimizer, lr_scheduler
@@ -159,6 +152,9 @@ def classification_train(
 
     # Training parameters
     epochs = cfg.train.epochs
+    # Testcases: override epochs
+    if cfg.testcase.load or cfg.testcase.save:
+        epochs = cfg.testcase.epochs
     device = cfg.device
 
     criterion = criterion().to(device)
@@ -175,6 +171,9 @@ def classification_train(
     # Counter for epochs without improvement
     epochs_no_improvement = 0
     max_epochs_no_improvement = 100
+
+    if cfg.testcase.save or cfg.testcase.load:
+        testcase_losses = []
 
     # iterate over epochs
     for epoch in range(epoch_start, epochs + epoch_start):
@@ -280,6 +279,9 @@ def classification_train(
                         # print(f"Resolution: {config.regularize_gabornet_res}")
                         # print(f"Total regularization term (incl. lambda): {gabor_reg:.8f}")
 
+                    if cfg.testcase.save or cfg.testcase.load:
+                        testcase_losses.append(loss.item())
+
                     # Backward pass:
                     if phase == "train":
                         loss.backward()
@@ -307,6 +309,9 @@ def classification_train(
                     pred_sm = torch.nn.functional.softmax(outputs, dim=1)
                     # torchmetrics.Accuracy requires everything to be on CPU
                     top5(pred_sm.to("cpu"), labels.to("cpu"))
+
+                if total >= cfg.testcase.batches:
+                    break
 
             # Log GaborNet frequencies
             if cfg.kernel.regularize and phase == "train":
@@ -424,6 +429,21 @@ def classification_train(
 
     # Print learned limits
     _print_learned_limits(model)
+
+    # Testcases: load/save losses for comparison
+    if cfg.testcase.save:
+        testcase_losses = np.array(testcase_losses)
+        with open(hydra.utils.to_absolute_path(cfg.testcase.path), 'wb') as f:
+            np.save(f, testcase_losses, allow_pickle=True)
+    if cfg.testcase.load:
+        testcase_losses = np.array(testcase_losses)
+        with open(hydra.utils.to_absolute_path(cfg.testcase.path), 'rb') as f:
+            target_losses = np.load(f, allow_pickle=True)
+        if np.allclose(testcase_losses, target_losses):
+            print("Testcase passed!")
+        else:
+            diff = np.sum(testcase_losses - target_losses)
+            raise AssertionError(f"Testcase failed: diff = {diff:.8f}")
 
     # Return model
     return model
