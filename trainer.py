@@ -256,12 +256,11 @@ def classification_train(
                         gabor_reg = antialiasing.regularize_gabornet(
                             model,
                             cfg.kernel.regularize_params.res,
+                            cfg.kernel.regularize_params.factor,
                             cfg.kernel.regularize_params.target,
                             cfg.kernel.regularize_params.fn,
                             cfg.kernel.regularize_params.method,
-                            cfg.kernel.regularize_params.factor,
                             gauss_stddevs=cfg.kernel.regularize_params.gauss_stddevs,
-                            gauss_factor=cfg.kernel.regularize_params.gauss_factor,
                         )
                         loss += gabor_reg
                         running_gabor_reg += gabor_reg

@@ -115,6 +115,7 @@ class TCNBase(torch.nn.Module):
         if conv_type == "CKConv":
             ConvType = partial(
                 ckconv.nn.CKConv,
+                horizon=conv_horizon,
                 kernel_type=kernel_type,
                 kernel_dim_linear=kernel_dim_linear,
                 kernel_no_hidden=kernel_no_hidden,
@@ -129,7 +130,6 @@ class TCNBase(torch.nn.Module):
                 kernel_bias_init=kernel_bias_init,
                 kernel_input_scale=kernel_input_scale,
                 kernel_sampling_rate_norm=kernel_sampling_rate_norm,
-                conv_horizon=conv_horizon,
                 conv_padding=conv_padding,
                 conv_stride=conv_stride,
                 conv_bias=conv_bias,
@@ -137,6 +137,7 @@ class TCNBase(torch.nn.Module):
         elif conv_type == "FlexConv":
             ConvType = partial(
                 ckconv.nn.FlexConv,
+                horizon=conv_horizon,
                 kernel_type=kernel_type,
                 kernel_dim_linear=kernel_dim_linear,
                 kernel_no_hidden=kernel_no_hidden,
@@ -151,7 +152,6 @@ class TCNBase(torch.nn.Module):
                 kernel_bias_init=kernel_bias_init,
                 kernel_input_scale=kernel_input_scale,
                 kernel_sampling_rate_norm=kernel_sampling_rate_norm,
-                conv_horizon=conv_horizon,
                 conv_padding=conv_padding,
                 conv_stride=conv_stride,
                 conv_bias=conv_bias,
