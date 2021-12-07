@@ -15,6 +15,10 @@ This repository contains the source code accompanying the paper:
 
 <img src="flexconv.png" alt="drawing" width="750"/>
 
+### Demo notebook
+
+To get introduced to FlexConv and this codebase, see our **[demo notebook](demo/flexconv.ipynb)**.
+
 ### Repository structure
 
 This repository is organized as follows:
