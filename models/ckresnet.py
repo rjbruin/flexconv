@@ -80,37 +80,100 @@ class Img_ResNet(torch.nn.Module):
         nonlinearity = net_config.nonlinearity
 
         # Unpack dim_linear
-        dim_linear = kernel_config.dim_linear
-        scale_sigma = kernel_config.srf.scale
+        kernel_scale_sigma = kernel_config.srf.scale
 
         # Unpack conv_type
         conv_type = conv_config.type
 
+        # Unpack kernel_config
+        kernel_type = kernel_config.type
+        kernel_dim_linear = kernel_config.dim_linear
+        kernel_no_hidden = kernel_config.no_hidden
+        kernel_no_layers = kernel_config.no_layers
+        kernel_activ_function = kernel_config.activ_function
+        kernel_norm = kernel_config.norm
+        kernel_omega_0 = kernel_config.omega_0
+        kernel_learn_omega_0 = kernel_config.learn_omega_0
+        kernel_weight_norm = kernel_config.weight_norm
+        kernel_steerable = kernel_config.steerable
+        kernel_init_spatial_value = kernel_config.init_spatial_value
+        kernel_bias_init = kernel_config.bias_init
+        kernel_input_scale = kernel_config.input_scale
+        kernel_sampling_rate_norm = kernel_config.sampling_rate_norm
+
         # Define Convolution Type:
         # -------------------------
         # Unpack other conv_config values in case normal convolutions are used.
+        conv_use_fft = conv_config.use_fft
         conv_horizon = conv_config.horizon
         conv_padding = conv_config.padding
         conv_stride = conv_config.stride
         conv_bias = conv_config.bias
 
+        # Unpack mask_config
+        mask_use = mask_config.use
+        mask_type = mask_config.type
+        mask_init_value = mask_config.init_value
+        mask_temperature = mask_config.temperature
+        mask_dynamic_cropping = mask_config.dynamic_cropping
+        mask_threshold = mask_config.threshold
+
         # Define partials for types of convs
         if conv_type == "CKConv":
             ConvType = partial(
                 ckconv.nn.CKConv,
-                kernel_config=kernel_config,
-                conv_config=conv_config,
+                horizon=conv_horizon,
+                kernel_type=kernel_type,
+                kernel_dim_linear=kernel_dim_linear,
+                kernel_no_hidden=kernel_no_hidden,
+                kernel_no_layers=kernel_no_layers,
+                kernel_activ_function=kernel_activ_function,
+                kernel_norm=kernel_norm,
+                kernel_omega_0=kernel_omega_0,
+                kernel_learn_omega_0=kernel_learn_omega_0,
+                kernel_weight_norm=kernel_weight_norm,
+                kernel_steerable=kernel_steerable,
+                kernel_init_spatial_value=kernel_init_spatial_value,
+                kernel_bias_init=kernel_bias_init,
+                kernel_input_scale=kernel_input_scale,
+                kernel_sampling_rate_norm=kernel_sampling_rate_norm,
+                conv_use_fft=conv_use_fft,
+                conv_bias=conv_bias,
+                conv_padding=conv_padding,
+                conv_stride=1,
             )
         elif conv_type == "FlexConv":
             ConvType = partial(
                 ckconv.nn.FlexConv,
-                kernel_config=kernel_config,
-                conv_config=conv_config,
-                mask_config=mask_config,
+                horizon=conv_horizon,
+                kernel_type=kernel_type,
+                kernel_dim_linear=kernel_dim_linear,
+                kernel_no_hidden=kernel_no_hidden,
+                kernel_no_layers=kernel_no_layers,
+                kernel_activ_function=kernel_activ_function,
+                kernel_norm=kernel_norm,
+                kernel_omega_0=kernel_omega_0,
+                kernel_learn_omega_0=kernel_learn_omega_0,
+                kernel_weight_norm=kernel_weight_norm,
+                kernel_steerable=kernel_steerable,
+                kernel_init_spatial_value=kernel_init_spatial_value,
+                kernel_bias_init=kernel_bias_init,
+                kernel_input_scale=kernel_input_scale,
+                kernel_sampling_rate_norm=kernel_sampling_rate_norm,
+                conv_use_fft=conv_use_fft,
+                conv_bias=conv_bias,
+                conv_padding=conv_padding,
+                conv_stride=conv_stride,
+                mask_use=mask_use,
+                mask_type=mask_type,
+                mask_init_value=mask_init_value,
+                mask_temperature=mask_temperature,
+                mask_dynamic_cropping=mask_dynamic_cropping,
+                mask_threshold=mask_threshold,
             )
         elif conv_type == "Conv":
             ConvType = partial(
-                getattr(torch.nn, f"Conv{dim_linear}d"),
+                getattr(torch.nn, f"Conv{kernel_dim_linear}d"),
                 kernel_size=int(conv_horizon),
                 padding=conv_padding,
                 stride=conv_stride,
@@ -123,7 +186,7 @@ class Img_ResNet(torch.nn.Module):
                 init_order=4.0,
                 init_scale=0.0,
                 use_cuda=True,  # NOTE(rjbruin): hardcoded for now
-                scale_sigma=scale_sigma,
+                scale_sigma=kernel_scale_sigma,
             )
         else:
             raise NotImplementedError(f"conv_type = {conv_type}")
@@ -131,7 +194,7 @@ class Img_ResNet(torch.nn.Module):
 
         # Define NormType
         NormType = {
-            "BatchNorm": getattr(torch.nn, f"BatchNorm{dim_linear}d"),
+            "BatchNorm": getattr(torch.nn, f"BatchNorm{kernel_dim_linear}d"),
             "LayerNorm": ckconv.nn.LayerNorm,
         }[norm]
 
@@ -140,7 +203,7 @@ class Img_ResNet(torch.nn.Module):
         ]
 
         # Define LinearType
-        LinearType = getattr(ckconv.nn, f"Linear{dim_linear}d")
+        LinearType = getattr(ckconv.nn, f"Linear{kernel_dim_linear}d")
 
         # Create Input Layers
         self.cconv1 = ConvType(in_channels=in_channels, out_channels=hidden_channels)
@@ -215,7 +278,7 @@ class Img_ResNet(torch.nn.Module):
         # -------------------------
 
         # Save variables in self
-        self.dim_linear = dim_linear
+        self.dim_linear = kernel_dim_linear
 
     def forward(self, x):
         # First layers

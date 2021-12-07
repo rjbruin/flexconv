@@ -18,61 +18,53 @@ class CKConv(torch.nn.Module):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_config: OmegaConf,
-        conv_config: OmegaConf,
+        horizon: int,
+        kernel_type = "MAGNet",
+        kernel_dim_linear = 2,
+        kernel_no_hidden = 32,
+        kernel_no_layers = 3,
+        kernel_activ_function = "ReLU",
+        kernel_norm = "BatchNorm",
+        kernel_omega_0 = 0.0,
+        kernel_learn_omega_0 = False,
+        kernel_weight_norm = False,
+        kernel_steerable = False,
+        kernel_init_spatial_value = 1.0,
+        kernel_bias_init = None,
+        kernel_input_scale = 25.6,
+        kernel_sampling_rate_norm = 1.0,
+        conv_use_fft = False,
+        conv_bias = True,
+        conv_padding = "same",
+        conv_stride = 1,
     ):
         """
         Continuous Kernel Convolution.
 
         :param in_channels: Number of channels in the input signal
         :param out_channels: Number of channels produced by the convolution
-        :param kernel_config: OmegaConf with settings for the kernel generator.
-            :param type: Identifier for the type of kernel generator to use.
-            :param dim_linear: Dimensionality of the input signal, e.g. 2 for images.
-            :param no_hidden: Amount of hidden channels to use.
-            :param activ_function: Activation function for type=MLP.
-            :param norm: Normalization function for type=MLP.
-            :param weight_norm: Weight normalization, for type=[MLP, SIREN, nSIREN].
-            :param no_layers: Amount of layers to use in kernel generator.
-            :param omega_0: Initial value for omega_0, for type=SIREN.
-            :param learn_omega_0: Whether to learn omega_0, for type=SIREN.
-            :param steerable: Whether to learn steerable kernels, for type=MAGNet.
-            :param init_spatial_value: Initial mu for gabor filters, for type=[GaborNet, MAGNet].
-            :param bias_init: Bias init strategy, for all types but type=MLP.
-            :param input_scale: Scaling factor for linear functions, for type=[GaborNet, MAGNet].
-            :param sampling_rate_norm: Kernel scaling factor for sampling rate normalization.
-        :param conv_config: OmegaConf with settings for the convolutional operator.
-            :param use_fft: Whether to use FFT implementation of convolution.
-            :param horizon: Maximum kernel size. Recommended to be odd and cover the entire image.
-            :param bias: Whether to use bias in kernel generator. TODO(rjbruin): move to kernel_config.
-            :param padding: Padding strategy for convolution.
-            :param stride: Stride applied in convolution.
+        :param horizon: Maximum kernel size. Recommended to be odd and cover the entire image.
+        :param kernel_type: Identifier for the type of kernel generator to use.
+        :param kernel_dim_linear: Dimensionality of the input signal, e.g. 2 for images.
+        :param kernel_no_hidden: Amount of hidden channels to use.
+        :param kernel_activ_function: Activation function for type=MLP.
+        :param kernel_norm: Normalization function for type=MLP.
+        :param kernel_weight_norm: Weight normalization, for type=[MLP, SIREN, nSIREN].
+        :param kernel_no_layers: Amount of layers to use in kernel generator.
+        :param kernel_omega_0: Initial value for omega_0, for type=SIREN.
+        :param kernel_learn_omega_0: Whether to learn omega_0, for type=SIREN.
+        :param kernel_steerable: Whether to learn steerable kernels, for type=MAGNet.
+        :param kernel_init_spatial_value: Initial mu for gabor filters, for type=[GaborNet, MAGNet].
+        :param kernel_bias_init: Bias init strategy, for all types but type=MLP.
+        :param kernel_input_scale: Scaling factor for linear functions, for type=[GaborNet, MAGNet].
+        :param kernel_sampling_rate_norm: Kernel scaling factor for sampling rate normalization.
+        :param conv_use_fft: Whether to use FFT implementation of convolution.
+        :param conv_bias: Whether to use bias in kernel generator. TODO(rjbruin): move to kernel_config.
+        :param conv_padding: Padding strategy for convolution.
+        :param conv_stride: Stride applied in convolution.
         """
 
         super().__init__()
-
-        # Unpack values from kernel_config
-        kernel_type = kernel_config.type
-        kernel_dim_linear = kernel_config.dim_linear
-        kernel_hidden_channels = kernel_config.no_hidden
-        kernel_activ_function = kernel_config.activ_function
-        kernel_norm = kernel_config.norm
-        kernel_weight_norm = kernel_config.weight_norm
-        kernel_no_layers = kernel_config.no_layers
-        kernel_omega_0 = kernel_config.omega_0
-        kernel_learn_omega_0 = kernel_config.learn_omega_0
-        kernel_steerable = kernel_config.steerable
-        kernel_init_spatial_value = kernel_config.init_spatial_value
-        kernel_bias_init = kernel_config.bias_init
-        kernel_input_scale = kernel_config.input_scale
-        kernel_sampling_rate_norm = kernel_config.sampling_rate_norm
-
-        # Unpack values from conv_config
-        use_fftconv = conv_config.use_fft
-        horizon = conv_config.horizon
-        bias = conv_config.bias
-        padding = conv_config.padding
-        stride = conv_config.stride
 
         # Since kernels are defined between [-1, 1] if values are bigger than one, they are modified.
         if kernel_init_spatial_value > 1.0:
@@ -87,21 +79,21 @@ class CKConv(torch.nn.Module):
             self.Kernel = ckconv.nn.ck.MLP(
                 dim_linear=kernel_dim_linear,
                 out_channels=out_channels * in_channels,
-                hidden_channels=kernel_hidden_channels,
+                hidden_channels=kernel_no_hidden,
                 activation_function=kernel_activ_function,
                 norm_type=kernel_norm,
                 weight_norm=kernel_weight_norm,
                 no_layers=kernel_no_layers,
-                bias=bias,
+                bias=conv_bias,
             )
         if kernel_type == "SIREN":
             self.Kernel = ckconv.nn.ck.SIREN(
                 dim_linear=kernel_dim_linear,
                 out_channels=out_channels * in_channels,
-                hidden_channels=kernel_hidden_channels,
+                hidden_channels=kernel_no_hidden,
                 weight_norm=kernel_weight_norm,
                 no_layers=kernel_no_layers,
-                bias=bias,
+                bias=conv_bias,
                 bias_init=kernel_bias_init,
                 omega_0=kernel_omega_0,
                 learn_omega_0=kernel_learn_omega_0,
@@ -110,10 +102,10 @@ class CKConv(torch.nn.Module):
             self.Kernel = ckconv.nn.ck.nSIREN(
                 dim_linear=kernel_dim_linear,
                 out_channels=out_channels * in_channels,
-                hidden_channels=kernel_hidden_channels,
+                hidden_channels=kernel_no_hidden,
                 weight_norm=kernel_weight_norm,
                 no_layers=kernel_no_layers,
-                bias=bias,
+                bias=conv_bias,
                 bias_init=kernel_bias_init,
                 omega_0=kernel_omega_0,
                 learn_omega_0=kernel_learn_omega_0,
@@ -122,18 +114,18 @@ class CKConv(torch.nn.Module):
             self.Kernel = ckconv.nn.ck.FourierNet(
                 dim_linear=kernel_dim_linear,
                 out_channels=out_channels * in_channels,
-                hidden_channels=kernel_hidden_channels,
+                hidden_channels=kernel_no_hidden,
                 no_layers=kernel_no_layers,
-                bias=bias,
+                bias=conv_bias,
                 bias_init=kernel_bias_init,
             )
         elif kernel_type == "Gabor":
             self.Kernel = ckconv.nn.ck.GaborNet(
                 dim_linear=kernel_dim_linear,
                 out_channels=out_channels * in_channels,
-                hidden_channels=kernel_hidden_channels,
+                hidden_channels=kernel_no_hidden,
                 no_layers=kernel_no_layers,
-                bias=bias,
+                bias=conv_bias,
                 bias_init=kernel_bias_init,
                 init_spatial_value=kernel_init_spatial_value,
                 input_scale=kernel_input_scale,
@@ -142,16 +134,16 @@ class CKConv(torch.nn.Module):
             self.Kernel = ckconv.nn.ck.MAGNet(
                 dim_linear=kernel_dim_linear,
                 out_channels=out_channels * in_channels,
-                hidden_channels=kernel_hidden_channels,
+                hidden_channels=kernel_no_hidden,
                 no_layers=kernel_no_layers,
                 steerable=kernel_steerable,
-                bias=bias,
+                bias=conv_bias,
                 bias_init=kernel_bias_init,
                 init_spatial_value=kernel_init_spatial_value,
                 input_scale=kernel_input_scale,
             )
 
-        if bias:
+        if conv_bias:
             self.bias = torch.nn.Parameter(torch.Tensor(out_channels))
             self.bias.data.fill_(value=0.0)
         else:
@@ -160,12 +152,12 @@ class CKConv(torch.nn.Module):
         # Save arguments in self
         # ---------------------
         # Non-persistent values
-        self.padding = padding
-        self.stride = stride
+        self.padding = conv_padding
+        self.stride = conv_stride
         self.rel_positions = None
         self.kernel_dim_linear = kernel_dim_linear
         self.horizon = horizon
-        self.use_fftconv = use_fftconv
+        self.use_fftconv = conv_use_fft
         self.kernel_sampling_rate_norm = kernel_sampling_rate_norm
 
         # Variable placeholders
@@ -174,7 +166,7 @@ class CKConv(torch.nn.Module):
 
         # Define convolution type
         conv_type = "conv"
-        if use_fftconv:
+        if conv_use_fft:
             conv_type = "fft" + conv_type
         if kernel_dim_linear == 1:
             conv_type = "causal_" + conv_type
@@ -228,53 +220,63 @@ class FlexConv(CKConv):
         self,
         in_channels: int,
         out_channels: int,
-        kernel_config: OmegaConf,
-        conv_config: OmegaConf,
-        mask_config: OmegaConf,
+        horizon: int,
+        kernel_type = "MAGNet",
+        kernel_dim_linear = 2,
+        kernel_no_hidden = 32,
+        kernel_no_layers = 3,
+        kernel_activ_function = "ReLU",
+        kernel_norm = "BatchNorm",
+        kernel_omega_0 = 0.0,
+        kernel_learn_omega_0 = False,
+        kernel_weight_norm = False,
+        kernel_steerable = False,
+        kernel_init_spatial_value = 1.0,
+        kernel_bias_init = None,
+        kernel_input_scale = 25.6,
+        kernel_sampling_rate_norm = 1.0,
+        conv_use_fft = False,
+        conv_bias = True,
+        conv_padding = "same",
+        conv_stride = 1,
+        mask_use = True,
+        mask_type = "gaussian",
+        mask_init_value = 0.075,
+        mask_temperature = 15.0,
+        mask_dynamic_cropping = True,
+        mask_threshold = 0.1,
     ):
         """
         Flexible Size Continuous Kernel Convolution.
 
         :param in_channels: Number of channels in the input signal
         :param out_channels: Number of channels produced by the convolution
-        :param kernel_config: OmegaConf with settings for the kernel generator.
-            :param type: Identifier for the type of kernel generator to use.
-            :param dim_linear: Dimensionality of the input signal, e.g. 2 for images.
-            :param no_hidden: Amount of hidden channels to use.
-            :param activ_function: Activation function for type=MLP.
-            :param norm: Normalization function for type=MLP.
-            :param weight_norm: Weight normalization, for type=[MLP, SIREN, nSIREN].
-            :param no_layers: Amount of layers to use in kernel generator.
-            :param omega_0: Initial value for omega_0, for type=SIREN.
-            :param learn_omega_0: Whether to learn omega_0, for type=SIREN.
-            :param steerable: Whether to learn steerable kernels, for type=MAGNet.
-            :param init_spatial_value: Initial mu for gabor filters, for type=[GaborNet, MAGNet].
-            :param bias_init: Bias init strategy, for all types but type=MLP.
-            :param input_scale: Scaling factor for linear functions, for type=[GaborNet, MAGNet].
-            :param sampling_rate_norm: Kernel scaling factor for sampling rate normalization.
-        :param conv_config: OmegaConf with settings for the convolutional operator.
-            :param use_fft: Whether to use FFT implementation of convolution.
-            :param horizon: Maximum kernel size. Recommended to be odd and cover the entire image.
-            :param bias: Whether to use bias in kernel generator. TODO(rjbruin): move to kernel_config.
-            :param padding: Padding strategy for convolution.
-            :param stride: Stride applied in convolution.
-        :param mask_config: OmegaConf with settings for the FlexConv Gaussian mask.
-            :param use: Whether to apply Gaussian mask.
-            :param type: Type of mask. Recommended to use "gaussian".
-            :param init_value: Initial value for the size of the kernel.
-            :param temperature: Temperature of the sigmoid function, for type=sigmoid.
-            :param dynamic_cropping: Whether to crop away pixels below the threshold.
-            :param threshold: Threshold for cropping pixels. Recommended to be 15.0.
+        :param horizon: Maximum kernel size. Recommended to be odd and cover the entire image.
+        :param kernel_type: Identifier for the type of kernel generator to use.
+        :param kernel_dim_linear: Dimensionality of the input signal, e.g. 2 for images.
+        :param kernel_no_hidden: Amount of hidden channels to use.
+        :param kernel_activ_function: Activation function for type=MLP.
+        :param kernel_norm: Normalization function for type=MLP.
+        :param kernel_weight_norm: Weight normalization, for type=[MLP, SIREN, nSIREN].
+        :param kernel_no_layers: Amount of layers to use in kernel generator.
+        :param kernel_omega_0: Initial value for omega_0, for type=SIREN.
+        :param kernel_learn_omega_0: Whether to learn omega_0, for type=SIREN.
+        :param kernel_steerable: Whether to learn steerable kernels, for type=MAGNet.
+        :param kernel_init_spatial_value: Initial mu for gabor filters, for type=[GaborNet, MAGNet].
+        :param kernel_bias_init: Bias init strategy, for all types but type=MLP.
+        :param kernel_input_scale: Scaling factor for linear functions, for type=[GaborNet, MAGNet].
+        :param kernel_sampling_rate_norm: Kernel scaling factor for sampling rate normalization.
+        :param conv_use_fft: Whether to use FFT implementation of convolution.
+        :param conv_bias: Whether to use bias in kernel generator. TODO(rjbruin): move to kernel_config.
+        :param conv_padding: Padding strategy for convolution.
+        :param conv_stride: Stride applied in convolution.
+        :param mask_use: Whether to apply Gaussian mask.
+        :param mask_type: Type of mask. Recommended to use "gaussian".
+        :param mask_init_value: Initial value for the size of the kernel.
+        :param mask_temperature: Temperature of the sigmoid function, for type=sigmoid.
+        :param mask_dynamic_cropping: Whether to crop away pixels below the threshold.
+        :param mask_threshold: Threshold for cropping pixels. Recommended to be 15.0.
         """
-        # Unpack mask_config values:
-        mask_use = mask_config.use
-        mask_type = mask_config.type
-        mask_init_value = mask_config.init_value
-        mask_temperature = mask_config.temperature
-        mask_dynamic_cropping = mask_config.dynamic_cropping
-        mask_threshold = mask_config.threshold
-
-        # conv_cache = conv_config.cache
 
         """
         Initialise init_spatial_value:
@@ -295,14 +297,31 @@ class FlexConv(CKConv):
 
         # Modify the kernel_config if required
         if init_spatial_value != mask_init_value:
-            kernel_config.init_spatial_value = init_spatial_value
+            kernel_init_spatial_value = init_spatial_value
 
         # Super
         super().__init__(
-            in_channels=in_channels,
-            out_channels=out_channels,
-            kernel_config=kernel_config,
-            conv_config=conv_config,
+            in_channels,
+            out_channels,
+            horizon,
+            kernel_type,
+            kernel_dim_linear,
+            kernel_no_hidden,
+            kernel_no_layers,
+            kernel_activ_function,
+            kernel_norm,
+            kernel_omega_0,
+            kernel_learn_omega_0,
+            kernel_weight_norm,
+            kernel_steerable,
+            kernel_init_spatial_value,
+            kernel_bias_init,
+            kernel_input_scale,
+            kernel_sampling_rate_norm,
+            conv_use_fft,
+            conv_bias,
+            conv_padding,
+            conv_stride,
         )
 
         # Define convolution types
