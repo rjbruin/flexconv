@@ -308,7 +308,7 @@ def classification_train(
                     # torchmetrics.Accuracy requires everything to be on CPU
                     top5(pred_sm.to("cpu"), labels.to("cpu"))
 
-                if total >= cfg.testcase.batches:
+                if (cfg.testcase.save or cfg.testcase.load) and total >= cfg.testcase.batches:
                     break
 
             # Log GaborNet frequencies
